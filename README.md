@@ -2,6 +2,12 @@
 
 > **Photorealistic AI Virtual Try-On and Personal Clothing Recommendation System** with 100% facial identity preservation, real diffusion-based image modification, and Ajio Fashion Catalog intelligence.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/rohitsagarpatra76-wq/RAMPRS)
+[![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg?logo=pytorch)](https://pytorch.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
+[![Diffusers](https://img.shields.io/badge/Diffusers-0.27+-FFD21E.svg)](https://github.com/huggingface/diffusers)
+
 ---
 
 ## 🌟 Key Features
@@ -18,6 +24,7 @@
    - Ingested real fashion data from `Ajio Fasion Clothing.csv` into a curated catalog (`ajio_curated_catalog.json`).
    - Analyzes personal colorimetry (Skin Undertone: Warm, Cool, Neutral; Contrast Ratio).
    - Recommends personalized Ajio outfits that complement the user's complexion with 1-click virtual try-on.
+   - **Full In-Browser Fallback**: When deployed to Vercel, the colorimetry analysis and Ajio catalog browser run natively in client-side JavaScript via HTML5 Canvas.
 
 4. **Selective Region Targeting**:
    - `Top`: Modifies shirt/upper garment only (pants, shoes, face locked).
@@ -29,6 +36,7 @@
    - Interactive **Before / After Split Comparison Slider** with smooth mouse and touch-drag support.
    - Multi-view stage: Slider, Side-by-Side, Edited Only, and Target Mask Preview.
    - Real-time WebRTC camera selfie capture and high-resolution JPEG download.
+   - **Dynamic AI Model Server Switcher (`⚙️ AI Server`)**: Allows seamless connection to local PyTorch servers or remote GPU tunnels.
 
 ---
 
@@ -48,30 +56,33 @@
                     │                                             │
                     └──────────────────────┬──────────────────────┘
                                            ▼
-                      [ Masked Silhouette + Canny Suppression ]
+                            [ Selective Clothing Mask ]
+                           (Top / Bottom / Outerwear)
                                            │
                                            ▼
-                   [ Stable Diffusion v1-5 + ControlNet Canny ]
-                         (UniPC Multistep Scheduler, Strength: 0.82)
+                      [ Internal Edge Suppression Canny ]
+                       (Zeroes Old Wrinkles & Seams)
                                            │
                                            ▼
-                      [ Precision Alpha Composite (0% Drift) ]
+                     [ Stable Diffusion 1.5 + ControlNet ]
+                               (UniPC Scheduler)
                                            │
                                            ▼
-                       [ Interactive Before/After Studio UI ]
+                          [ Seamless Compositing & Lock ]
+                                           │
+                                           ▼
+                             [ Luxury Before/After UI ]
 ```
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Quick Start (Local Setup)
 
 ### Prerequisites
-- **Node.js** (v18 or newer)
 - **Python** (3.10 or 3.11 recommended)
 - **PyTorch** & vision dependencies:
   ```bash
-  pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-  pip install diffusers transformers accelerate fastapi uvicorn opencv-python pillow
+  pip install -r ramprs-ai-mirror-mvp/requirements.txt
   ```
 
 ### 1. Start the AI Model Server (Port 8000)
@@ -95,12 +106,26 @@ http://localhost:3000
 
 ---
 
+## ☁️ Deploying on Vercel
+
+1. Click **[Deploy with Vercel](https://vercel.com/new/clone?repository-url=https://github.com/rohitsagarpatra76-wq/RAMPRS)** or import the repo at [vercel.com/new](https://vercel.com/new).
+2. The included `vercel.json` configures all routing automatically.
+3. Once deployed, open the live URL:
+   - The studio UI, Before/After comparison slider, camera capture, Ajio personal styling diagnostic, and catalog recommendations run 100% live on Vercel.
+   - To execute diffusion try-on from Vercel using your local PC or GPU instance, expose port 8000 using Cloudflare Tunnel:
+     ```bash
+     cloudflared tunnel --url http://127.0.0.1:8000
+     ```
+     Then click **⚙️ AI Server** in the topbar and paste your tunnel URL!
+
+---
+
 ## 📡 API Endpoints
 
 - `POST /edit_clothing`: Generates precision try-on edits with selective masking and face-lock.
 - `POST /ajio/analyze_and_recommend`: Analyzes skin tone and returns matched Ajio fashion catalog items.
 - `GET /ajio/catalog`: Browses curated Ajio clothing items by category.
-- `GET /health`: Returns engine status, active AI models, and capabilities.
+- `GET /health`: Returns engine status, active AI models, and device capabilities.
 
 ---
 
