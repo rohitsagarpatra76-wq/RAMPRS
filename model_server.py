@@ -17,7 +17,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import cv2
 import numpy as np
-import torch
+
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    TORCH_AVAILABLE = False
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -45,6 +52,8 @@ ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
 # ── Safe Device Detection ─────────────────────────────────────────
 def get_safe_device() -> str:
+    if not TORCH_AVAILABLE or torch is None:
+        return 'cpu'
     if torch.cuda.is_available():
         try:
             test_t = torch.zeros(1, device="cuda")
@@ -87,12 +96,14 @@ class EditClothingRequest(BaseModel):
 @app.on_event("startup")
 def startup_load_models():
     global pipe, device_name
-    device_name = get_safe_device()
-    dtype = torch.float16 if device_name == "cuda" else torch.float32
 
-    if not DIFFUSERS_AVAILABLE or os.environ.get("LIGHT_MODE", "").lower() in ("true", "1"):
+    if not TORCH_AVAILABLE or not DIFFUSERS_AVAILABLE or os.environ.get("LIGHT_MODE", "").lower() in ("true", "1"):
+        device_name = "cpu"
         print("[Startup] Fast Neural Try-On & YuNet Face-Lock Engine active.")
         return
+
+    device_name = get_safe_device()
+    dtype = torch.float16 if device_name == "cuda" else torch.float32
 
     print(f"[Startup] Loading ControlNet Canny ({CONTROLNET_ID}) on {device_name.upper()}...")
     try:

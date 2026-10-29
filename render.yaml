@@ -14,3 +14,4 @@ services:
         value: "true"
       - key: LIGHT_MODE
         value: "true"
+
