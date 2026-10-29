@@ -11,15 +11,15 @@ function getApiBase() {
 
 
 const state = {
-  personPhotoUrl: 'assets/user_portrait_sample.jpg',
+  personPhotoUrl: 'assets/b118.png',
   garmentPhotoUrl: null,
   targetRegion: 'all',
   inputMode: 'ajio', // 'ajio', 'text', 'garment', 'hybrid'
   styleMode: 'editorial',
   fit: 'Regular',
   stream: null,
-  lastEditedUrl: 'assets/user_portrait_sample.jpg',
-  maskPreviewUrl: 'assets/user_portrait_sample.jpg',
+  lastEditedUrl: 'assets/b118.png',
+  maskPreviewUrl: 'assets/b118.png',
   ajioCategory: 'All'
 };
 
