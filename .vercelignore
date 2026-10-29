@@ -1,10 +1,12 @@
-# Ignore Python backend from Vercel static build
-*.py
-requirements.txt
-*.onnx
-*.xml
-*.csv
+# Ignore heavy models and local binaries from Vercel build
 RAMPRS_AI_Colab_Server.ipynb
+*.csv
 benchmark_results/
 cloudflared.exe
 *.bat
+ramprs-ai-mirror-mvp/*.py
+ramprs-ai-mirror-mvp/*.onnx
+ramprs-ai-mirror-mvp/*.xml
+ramprs-ai-mirror-mvp/requirements.txt
+image.png
+b118aaf0ba2e8b8971d9b29898baedd3.jpg
