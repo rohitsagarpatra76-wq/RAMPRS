@@ -86,21 +86,40 @@ def startup_load_models():
     dtype = torch.float16 if device_name == "cuda" else torch.float32
 
     print(f"[Startup] Loading ControlNet Canny ({CONTROLNET_ID}) on {device_name.upper()}...")
-    controlnet = ControlNetModel.from_pretrained(
-        CONTROLNET_ID,
-        torch_dtype=dtype,
-        local_files_only=True
-    )
+    try:
+        controlnet = ControlNetModel.from_pretrained(
+            CONTROLNET_ID,
+            torch_dtype=dtype,
+            local_files_only=True
+        )
+    except Exception:
+        print(f"[Startup] Downloading {CONTROLNET_ID} from Hugging Face...")
+        controlnet = ControlNetModel.from_pretrained(
+            CONTROLNET_ID,
+            torch_dtype=dtype,
+            local_files_only=False
+        )
 
     print(f"[Startup] Loading Diffusion Inpainting/Img2Img on {device_name.upper()}...")
-    pipe = StableDiffusionControlNetImg2ImgPipeline.from_pretrained(
-        MODEL_ID,
-        controlnet=controlnet,
-        torch_dtype=dtype,
-        safety_checker=None,
-        requires_safety_checker=False,
-        local_files_only=True
-    )
+    try:
+        pipe = StableDiffusionControlNetImg2ImgPipeline.from_pretrained(
+            MODEL_ID,
+            controlnet=controlnet,
+            torch_dtype=dtype,
+            safety_checker=None,
+            requires_safety_checker=False,
+            local_files_only=True
+        )
+    except Exception:
+        print(f"[Startup] Downloading {MODEL_ID} from Hugging Face...")
+        pipe = StableDiffusionControlNetImg2ImgPipeline.from_pretrained(
+            MODEL_ID,
+            controlnet=controlnet,
+            torch_dtype=dtype,
+            safety_checker=None,
+            requires_safety_checker=False,
+            local_files_only=False
+        )
     pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
     pipe.to(device_name)
 

@@ -373,13 +373,7 @@ async function executeClothingEdit() {
 
   } catch (err) {
     console.error('Editing error:', err);
-    if (window.location.hostname.includes('vercel.app') && !localStorage.getItem('RAMPRS_API_URL')) {
-      alert("⚡ Vercel Deployment Notice:\n\nThe heavy PyTorch/ControlNet AI model runs on local/cloud GPU hardware.\n\nTo generate live diffusion try-ons from Vercel, connect your server in '⚙️ AI Server' (e.g. using a free Cloudflare Tunnel: cloudflared tunnel --url http://127.0.0.1:8000).");
-      const btnCfg = $('btnServerConfig');
-      if (btnCfg) btnCfg.click();
-    } else {
-      alert(`Virtual Try-On error: ${err.message || 'Server unavailable'}`);
-    }
+    alert(`Virtual Try-On: ${err.message || 'AI engine is busy processing. Please wait a moment and try again.'}`);
   } finally {
     btn.disabled = false;
     overlay.hidden = true;

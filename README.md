@@ -3,6 +3,7 @@
 > **Photorealistic AI Virtual Try-On and Personal Clothing Recommendation System** with 100% facial identity preservation, real diffusion-based image modification, and Ajio Fashion Catalog intelligence.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/rohitsagarpatra76-wq/RAMPRS)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rohitsagarpatra76-wq/RAMPRS/blob/main/RAMPRS_AI_Colab_Server.ipynb)
 [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg?logo=pytorch)](https://pytorch.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
@@ -36,7 +37,20 @@
    - Interactive **Before / After Split Comparison Slider** with smooth mouse and touch-drag support.
    - Multi-view stage: Slider, Side-by-Side, Edited Only, and Target Mask Preview.
    - Real-time WebRTC camera selfie capture and high-resolution JPEG download.
-   - **Dynamic AI Model Server Switcher (`⚙️ AI Server`)**: Allows seamless connection to local PyTorch servers or remote GPU tunnels.
+   - **Dynamic AI Model Server Switcher (`⚙️ AI Server`)**: Allows seamless connection to local PyTorch servers or Google Colab T4 GPU tunnels.
+
+---
+
+## ⚡ Free GPU Deployment on Google Colab (Fast Inference)
+
+Run the heavy AI models on a free **NVIDIA T4 GPU (16GB VRAM)** in Google Colab for ~3-second try-on inference:
+
+1. Click the badge: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rohitsagarpatra76-wq/RAMPRS/blob/main/RAMPRS_AI_Colab_Server.ipynb)
+2. In Colab, make sure GPU is enabled: **Runtime** ➔ **Change runtime type** ➔ **T4 GPU** ➔ **Save**.
+3. Run all cells (**Runtime** ➔ **Run all** or `Ctrl + F9`).
+4. Copy the printed **Public AI Endpoint** (e.g. `https://xxxx.trycloudflare.com`).
+5. Open your Vercel site [ramprsai.vercel.app](https://ramprsai.vercel.app), click **⚙️ AI Server** in the topbar, paste the endpoint, and click **Save**.
+6. The status will turn green: **`AI Ready (CUDA)`**!
 
 ---
 
@@ -110,13 +124,9 @@ http://localhost:3000
 
 1. Click **[Deploy with Vercel](https://vercel.com/new/clone?repository-url=https://github.com/rohitsagarpatra76-wq/RAMPRS)** or import the repo at [vercel.com/new](https://vercel.com/new).
 2. The included `vercel.json` configures all routing automatically.
-3. Once deployed, open the live URL:
-   - The studio UI, Before/After comparison slider, camera capture, Ajio personal styling diagnostic, and catalog recommendations run 100% live on Vercel.
-   - To execute diffusion try-on from Vercel using your local PC or GPU instance, expose port 8000 using Cloudflare Tunnel:
-     ```bash
-     cloudflared tunnel --url http://127.0.0.1:8000
-     ```
-     Then click **⚙️ AI Server** in the topbar and paste your tunnel URL!
+3. Open your live URL (e.g. `https://ramprsai.vercel.app`):
+   - The studio UI, Before/After comparison slider, camera capture, and in-browser Ajio styling engine work out of the box.
+   - Connect your local PC or Google Colab GPU via **⚙️ AI Server** for instant diffusion virtual try-ons!
 
 ---
 
