@@ -27,3 +27,7 @@ ramprs-ai-mirror-mvp/benchmark_results/*.jpg
 .idea/
 Thumbs.db
 .DS_Store
+
+*.exe
+cloudflared.exe
+image.png

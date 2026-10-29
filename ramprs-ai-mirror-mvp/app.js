@@ -1,12 +1,14 @@
 const $ = (id) => document.getElementById(id);
 
+const DEFAULT_CLOUD_TUNNEL = 'https://degree-teaches-brussels-lamb.trycloudflare.com';
+
 function getApiBase() {
   const custom = localStorage.getItem('RAMPRS_API_URL');
   if (custom && custom.trim()) return custom.trim().replace(/\/+$/, '');
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     return 'http://127.0.0.1:8000';
   }
-  return 'http://127.0.0.1:8000';
+  return DEFAULT_CLOUD_TUNNEL;
 }
 
 
