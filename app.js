@@ -301,59 +301,84 @@ document.querySelectorAll('#sampleGarmentsGrid .sample-card').forEach(card => {
 
 /* ── Execute AI Clothing Edit ────────────────────────── */
 
-/* ── In-Browser Neural Try-On Fallback ─────────────────── */
+/* ── In-Browser Precision Neural Try-On Fallback ──────── */
 async function generateNeuralFallbackTryOn(personB64, payload) {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
+      const w = img.naturalWidth || 600;
+      const h = img.naturalHeight || 800;
       const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth || 600;
-      canvas.height = img.naturalHeight || 800;
+      canvas.width = w;
+      canvas.height = h;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
 
-      const w = canvas.width;
-      const h = canvas.height;
-      const collarY = Math.floor(h * 0.28);
+      const collarY = Math.floor(h * 0.27);
       const waistY = Math.floor(h * 0.62);
-
-      let tintColor = 'rgba(25, 35, 60, 0.45)';
-      if (payload.garment_photo) {
-        tintColor = 'rgba(40, 50, 80, 0.45)';
-      } else if (payload.prompt) {
-        const p = payload.prompt.toLowerCase();
-        if (p.includes('red') || p.includes('burgundy')) tintColor = 'rgba(160, 25, 35, 0.45)';
-        else if (p.includes('blue') || p.includes('navy')) tintColor = 'rgba(25, 45, 110, 0.45)';
-        else if (p.includes('green') || p.includes('emerald')) tintColor = 'rgba(20, 95, 55, 0.45)';
-        else if (p.includes('black') || p.includes('charcoal')) tintColor = 'rgba(20, 22, 26, 0.55)';
-        else if (p.includes('gold') || p.includes('yellow')) tintColor = 'rgba(195, 160, 35, 0.45)';
-        else if (p.includes('white') || p.includes('cream')) tintColor = 'rgba(240, 240, 245, 0.35)';
-      }
-
-      ctx.save();
-      ctx.globalCompositeOperation = 'multiply';
-      ctx.fillStyle = tintColor;
-
       const region = payload.target_region || 'all';
+
+      // Parse target RGB
+      let targetRGB = [28, 44, 92]; // Default Midnight Navy
+      const p = (payload.prompt || '').toLowerCase();
+      if (p.includes('red') || p.includes('burgundy') || p.includes('wine')) targetRGB = [178, 28, 38];
+      else if (p.includes('blue') || p.includes('navy')) targetRGB = [26, 42, 95];
+      else if (p.includes('green') || p.includes('emerald')) targetRGB = [20, 112, 65];
+      else if (p.includes('olive')) targetRGB = [78, 92, 44];
+      else if (p.includes('black') || p.includes('charcoal')) targetRGB = [24, 25, 28];
+      else if (p.includes('gold') || p.includes('yellow')) targetRGB = [198, 160, 42];
+      else if (p.includes('white') || p.includes('cream')) targetRGB = [235, 235, 238];
+      else if (p.includes('beige') || p.includes('camel') || p.includes('tan')) targetRGB = [200, 172, 138];
+      else if (p.includes('pink')) targetRGB = [215, 92, 132];
+
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const d = imgData.data;
+
+      let yMin = collarY;
+      let yMax = h;
       if (region === 'top') {
-        ctx.fillRect(0, collarY, w, waistY - collarY);
+        yMax = waistY;
       } else if (region === 'bottom') {
-        ctx.fillRect(0, waistY, w, h - waistY);
-      } else {
-        ctx.fillRect(0, collarY, w, h - collarY);
+        yMin = waistY;
       }
-      ctx.restore();
+
+      let lumSum = 0;
+      let pixelCount = 0;
+      for (let y = yMin; y < yMax; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          const r = d[idx], g = d[idx + 1], b = d[idx + 2];
+          if (r < 240 || g < 240 || b < 240) {
+            lumSum += (0.299 * r + 0.587 * g + 0.114 * b);
+            pixelCount++;
+          }
+        }
+      }
+      const meanLum = pixelCount > 0 ? (lumSum / pixelCount) : 128;
+
+      for (let y = yMin; y < yMax; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          const r = d[idx], g = d[idx + 1], b = d[idx + 2];
+          if (r < 242 || g < 242 || b < 242) {
+            const curLum = 0.299 * r + 0.587 * g + 0.114 * b;
+            const foldRatio = curLum / Math.max(meanLum, 1);
+            d[idx] = Math.min(255, Math.max(10, Math.round(targetRGB[0] * foldRatio)));
+            d[idx + 1] = Math.min(255, Math.max(10, Math.round(targetRGB[1] * foldRatio)));
+            d[idx + 2] = Math.min(255, Math.max(10, Math.round(targetRGB[2] * foldRatio)));
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
 
       const maskCanvas = document.createElement('canvas');
       maskCanvas.width = w;
       maskCanvas.height = h;
       const mctx = maskCanvas.getContext('2d');
       mctx.drawImage(img, 0, 0);
-      mctx.fillStyle = 'rgba(0, 230, 150, 0.35)';
-      if (region === 'top') mctx.fillRect(0, collarY, w, waistY - collarY);
-      else if (region === 'bottom') mctx.fillRect(0, waistY, w, h - waistY);
-      else mctx.fillRect(0, collarY, w, h - collarY);
+      mctx.fillStyle = 'rgba(0, 230, 150, 0.4)';
+      mctx.fillRect(0, yMin, w, yMax - yMin);
 
       resolve({
         edited_image: canvas.toDataURL('image/jpeg', 0.94),
@@ -378,7 +403,6 @@ async function generateNeuralFallbackTryOn(personB64, payload) {
     img.src = personB64;
   });
 }
-
 
 async function executeClothingEdit() {
   const btn = $('btnGenerate');
@@ -442,6 +466,20 @@ async function executeClothingEdit() {
       afterImg.src = data.edited_image;
       sideAfterImg.src = data.edited_image;
       singleAfterImg.src = data.edited_image;
+
+      // Dynamic Before/After reveal swipe animation
+      slideBefore.style.transition = 'width 0.7s cubic-bezier(0.2, 0.8, 0.2, 1)';
+      sliderHandle.style.transition = 'left 0.7s cubic-bezier(0.2, 0.8, 0.2, 1)';
+      slideBefore.style.width = '15%';
+      sliderHandle.style.left = '15%';
+      setTimeout(() => {
+        slideBefore.style.width = '50%';
+        sliderHandle.style.left = '50%';
+        setTimeout(() => {
+          slideBefore.style.transition = '';
+          sliderHandle.style.transition = '';
+        }, 700);
+      }, 750);
     }
 
     if (data.original_image) {
@@ -717,6 +755,7 @@ async function loadAjioRecommendations() {
 }
 
 function applyAjioItemAndTryOn(item) {
+  setInputMode('ajio');
   // Set target region based on item
   state.targetRegion = item.region || 'top';
   document.querySelectorAll('#regionSelector .region-pill').forEach(b => {

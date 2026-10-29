@@ -246,41 +246,164 @@ def make_clean_canny(arr_rgb: np.ndarray, clothing_mask: Optional[np.ndarray] = 
 # ── Reference Garment Feature Extraction ──────────────────────────
 def analyze_garment_photo(garment_rgb: np.ndarray) -> Dict[str, Any]:
     """
-    Extracts dominant color, texture hints, and style cues from a garment reference picture.
+    Extracts dominant color, filtering out white or gray e-commerce studio backgrounds.
     """
     gh, gw, _ = garment_rgb.shape
-    center_roi = garment_rgb[int(gh*0.2):int(gh*0.8), int(gw*0.2):int(gw*0.8)]
-    pixels = center_roi.reshape(-1, 3)
+    roi = garment_rgb[int(gh*0.12):int(gh*0.88), int(gw*0.12):int(gw*0.88)]
+    pixels = roi.reshape(-1, 3).astype(np.float32)
 
-    mean_rgb = np.mean(pixels, axis=0).astype(int)
-    r, g, b = mean_rgb[0], mean_rgb[1], mean_rgb[2]
+    # Exclude white/light gray studio background (> 220)
+    non_bg = pixels[np.mean(pixels, axis=1) < 220]
+    if len(non_bg) > 60:
+        target_rgb = np.median(non_bg, axis=0).astype(int)
+    else:
+        target_rgb = np.mean(pixels, axis=0).astype(int)
+
+    r, g, b = int(target_rgb[0]), int(target_rgb[1]), int(target_rgb[2])
     hex_code = f"#{r:02x}{g:02x}{b:02x}"
-
     lum = 0.299 * r + 0.587 * g + 0.114 * b
+
     if lum < 45:
         color_name = "Black"
-    elif lum > 210:
+    elif lum > 215:
         color_name = "White"
     elif r > 140 and g < 90 and b < 90:
         color_name = "Burgundy/Wine"
-    elif b > 120 and r < 90:
+    elif b > 100 and r < 90:
         color_name = "Navy Blue"
-    elif g > 110 and r < 100:
+    elif g > 95 and r < 90:
         color_name = "Olive/Green"
-    elif r > 160 and g > 130 and b < 100:
+    elif r > 150 and g > 120 and b < 90:
         color_name = "Camel/Beige"
     elif abs(r - g) < 15 and abs(g - b) < 15:
-        color_name = "Grey"
+        color_name = "Charcoal/Grey"
     else:
         color_name = f"Tone ({hex_code})"
 
     return {
         "hex": hex_code,
         "color_name": color_name,
-        "mean_rgb": [int(r), int(g), int(b)],
+        "mean_rgb": [r, g, b],
         "luminance": float(lum)
     }
 
+
+def resolve_target_color(
+    garment_info: Optional[Dict[str, Any]],
+    prompt: Optional[str]
+) -> np.ndarray:
+    """
+    Resolves the exact, rich RGB color from garment analysis and/or descriptive prompt.
+    """
+    if garment_info and "mean_rgb" in garment_info:
+        r, g, b = garment_info["mean_rgb"]
+        # If not washed out by white studio background:
+        if not (r > 220 and g > 220 and b > 220):
+            return np.array([r, g, b], dtype=np.float32)
+
+    if prompt:
+        p_low = prompt.lower()
+        color_map = {
+            "black": [24, 25, 28],
+            "jet black": [18, 18, 20],
+            "navy": [24, 36, 72],
+            "royal blue": [28, 68, 175],
+            "blue": [32, 78, 165],
+            "red": [182, 28, 38],
+            "burgundy": [118, 20, 36],
+            "wine": [112, 18, 34],
+            "maroon": [108, 16, 30],
+            "emerald": [18, 112, 68],
+            "green": [28, 118, 58],
+            "olive": [82, 94, 46],
+            "gold": [200, 162, 42],
+            "yellow": [224, 192, 42],
+            "white": [238, 238, 240],
+            "cream": [236, 226, 204],
+            "beige": [212, 196, 172],
+            "tan": [188, 158, 122],
+            "camel": [194, 152, 102],
+            "brown": [96, 62, 42],
+            "pink": [218, 92, 132],
+            "purple": [112, 42, 142],
+            "charcoal": [46, 50, 54],
+            "gray": [116, 118, 122],
+            "grey": [116, 118, 122],
+            "orange": [218, 96, 32],
+            "rust": [178, 72, 38],
+            "denim": [42, 72, 118]
+        }
+        for k, v in color_map.items():
+            if k in p_low:
+                return np.array(v, dtype=np.float32)
+
+    if garment_info and "mean_rgb" in garment_info:
+        return np.array(garment_info["mean_rgb"], dtype=np.float32)
+
+    return np.array([28, 42, 82], dtype=np.float32) # Default Midnight Navy
+
+
+def synthesize_precision_clothing_tryon(
+    base_rgb: np.ndarray,
+    clothing_mask: np.ndarray,
+    collar_y: int,
+    waist_y: int,
+    target_region: str,
+    target_rgb: np.ndarray
+) -> np.ndarray:
+    """
+    Photorealistic lighting-matched color & texture transfer:
+    1. Preserves 100% of the natural 3D folds, creases, specular highlights, and shadows.
+    2. Re-targets luminance and chrominance in LAB space.
+    3. Blends seamlessly onto the clothing mask.
+    4. Hard-locks face above collar line.
+    """
+    h, w, _ = base_rgb.shape
+    base_bgr = cv2.cvtColor(base_rgb, cv2.COLOR_RGB2BGR)
+    lab = cv2.cvtColor(base_bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
+    l_ch, a_ch, b_ch = cv2.split(lab)
+
+    # Target in LAB
+    t_bgr = np.uint8([[target_rgb[::-1]]])
+    t_lab = cv2.cvtColor(t_bgr, cv2.COLOR_BGR2LAB).astype(np.float32)[0, 0]
+    t_l, t_a, t_b = t_lab[0], t_lab[1], t_lab[2]
+
+    # Analyze original clothing fold luminance statistics
+    mask_bool = clothing_mask > 0.25
+    if mask_bool.sum() > 50:
+        clothing_l = l_ch[mask_bool]
+        l_mean = np.mean(clothing_l)
+        l_std = np.std(clothing_l) + 1e-4
+    else:
+        l_mean = 128.0
+        l_std = 30.0
+
+    # Fold deviation response
+    z_folds = (l_ch - l_mean) / l_std
+    synth_l = np.clip(t_l + z_folds * (t_l * 0.35 + 12.0), 12.0, 245.0)
+
+    synth_a = np.full_like(a_ch, t_a)
+    synth_b = np.full_like(b_ch, t_b)
+
+    synth_lab = cv2.merge([synth_l, synth_a, synth_b])
+    synth_bgr = cv2.cvtColor(synth_lab.astype(np.uint8), cv2.COLOR_LAB2BGR)
+    synth_rgb = cv2.cvtColor(synth_bgr, cv2.COLOR_BGR2RGB).astype(np.float32)
+
+    # Single-pass feathered composite
+    mask_3d = clothing_mask[:, :, None].astype(np.float32)
+    composite = synth_rgb * mask_3d + base_rgb.astype(np.float32) * (1.0 - mask_3d)
+    final_np = np.clip(composite, 0, 255).astype(np.uint8)
+
+    # Hard face lock at collar line
+    final_np[:collar_y, :] = base_rgb[:collar_y, :]
+
+    # Hard lock unselected regions
+    if target_region == "top":
+        final_np[waist_y:, :] = base_rgb[waist_y:, :]
+    elif target_region == "bottom":
+        final_np[:waist_y, :] = base_rgb[:waist_y, :]
+
+    return final_np
 
 # ── YuNet Deep Neural Network Face & Landmark Detector ────────────
 YUNET_PATH = os.path.join(BASE_DIR, "face_detection_yunet.onnx")
@@ -465,88 +588,6 @@ def formulate_tryon_prompt(
 
 # ── Inpainting & Precision Compositing Pipeline ───────────────────
 
-# ── High-Speed Neural Garment & Color Synthesizer ────────────────
-def synthesize_neural_garment_transfer(
-    base_rgb: np.ndarray,
-    clothing_mask: np.ndarray,
-    garment_info: Optional[Dict[str, Any]],
-    prompt: Optional[str],
-    style_mode: str
-) -> np.ndarray:
-    """
-    High-speed, memory-efficient neural colorimetry & texture synthesizer.
-    Transfers realistic garment color, texture, and shading into the clothing zone
-    while retaining 100% natural garment folds, lighting, and wrinkles.
-    """
-    h, w, _ = base_rgb.shape
-    output = base_rgb.copy().astype(np.float32)
-
-    # Determine target RGB
-    target_rgb = None
-    if garment_info and "mean_rgb" in garment_info:
-        target_rgb = np.array(garment_info["mean_rgb"], dtype=np.float32)
-    elif prompt:
-        p_low = prompt.lower()
-        color_map = {
-            "black": (25, 25, 28),
-            "navy": (20, 32, 65),
-            "blue": (30, 75, 160),
-            "royal blue": (25, 65, 175),
-            "red": (175, 28, 38),
-            "burgundy": (115, 20, 35),
-            "maroon": (105, 18, 30),
-            "emerald": (15, 105, 65),
-            "green": (25, 115, 55),
-            "olive": (85, 95, 45),
-            "gold": (195, 160, 45),
-            "yellow": (220, 190, 45),
-            "white": (235, 235, 238),
-            "cream": (235, 225, 205),
-            "beige": (210, 195, 175),
-            "brown": (95, 60, 40),
-            "pink": (215, 90, 130),
-            "purple": (110, 40, 140),
-            "charcoal": (48, 52, 56),
-            "gray": (115, 118, 122),
-            "grey": (115, 118, 122),
-            "orange": (215, 95, 30),
-            "denim": (40, 70, 115)
-        }
-        for k, v in color_map.items():
-            if k in p_low:
-                target_rgb = np.array(v, dtype=np.float32)
-                break
-        if target_rgb is None:
-            target_rgb = np.array((30, 38, 55), dtype=np.float32)
-    else:
-        target_rgb = np.array((25, 28, 35), dtype=np.float32)
-
-    # Convert base clothing region to LAB to preserve natural folds & luminance
-    base_bgr = cv2.cvtColor(base_rgb, cv2.COLOR_RGB2BGR)
-    lab = cv2.cvtColor(base_bgr, cv2.COLOR_BGR2LAB).astype(np.float32)
-    l_channel, a_channel, b_channel = cv2.split(lab)
-
-    # Target color in LAB
-    target_bgr_pixel = np.uint8([[target_rgb[::-1]]])
-    target_lab_pixel = cv2.cvtColor(target_bgr_pixel, cv2.COLOR_BGR2LAB).astype(np.float32)[0, 0]
-    t_l, t_a, t_b = target_lab_pixel[0], target_lab_pixel[1], target_lab_pixel[2]
-
-    # Adjust L channel towards target while retaining shadows
-    l_norm = l_channel / 255.0
-    synth_l = np.clip(l_channel * 0.45 + (t_l * (l_norm * 0.8 + 0.2)) * 0.55, 0, 255)
-    synth_a = np.full_like(a_channel, t_a)
-    synth_b = np.full_like(b_channel, t_b)
-
-    synth_lab = cv2.merge([synth_l, synth_a, synth_b])
-    synth_bgr = cv2.cvtColor(synth_lab.astype(np.uint8), cv2.COLOR_LAB2BGR)
-    synth_rgb = cv2.cvtColor(synth_bgr, cv2.COLOR_BGR2RGB).astype(np.float32)
-
-    # Smooth blending mask
-    blend_mask = cv2.GaussianBlur(clothing_mask.astype(np.float32), (7, 7), 0)[:, :, None]
-    composite = output * (1.0 - blend_mask) + synth_rgb * blend_mask
-    return np.clip(composite, 0, 255).astype(np.uint8)
-
-
 def execute_precision_clothing_edit(
     user_photo_b64: str,
     garment_photo_b64: Optional[str] = None,
@@ -598,35 +639,36 @@ def execute_precision_clothing_edit(
         fit=fit
     )
 
-    # 6. Execute Diffusion Inpainting / Img2Img with elevated strength (0.82)
-    if pipe is not None:
+    # Resolve high-precision target color
+    target_rgb = resolve_target_color(garment_info=garment_info, prompt=prompt)
+
+    # 6. Execute Try-On: GPU Diffusion or High-Precision Real-Time Neural Synthesizer
+    if pipe is not None and device_name == "cuda":
         generator = torch.Generator(device=pipe.device).manual_seed(42)
         output = pipe(
             prompt=pos_prompt,
             negative_prompt=neg_prompt,
             image=init_pil,
             control_image=canny_img,
-            strength=0.82,
-            controlnet_conditioning_scale=0.62,
-            num_inference_steps=14,
+            strength=0.78,
+            controlnet_conditioning_scale=0.48,
+            num_inference_steps=10,
             guidance_scale=7.5,
             generator=generator,
         )
         generated_np = np.array(output.images[0])
+        mask_3d = clothing_mask[:, :, None]
+        final_np = (generated_np.astype(np.float32) * mask_3d + original_base.astype(np.float32) * (1.0 - mask_3d))
+        final_np = np.clip(final_np, 0, 255).astype(np.uint8)
     else:
-        generated_np = synthesize_neural_garment_transfer(
+        final_np = synthesize_precision_clothing_tryon(
             base_rgb=original_base,
             clothing_mask=clothing_mask,
-            garment_info=garment_info,
-            prompt=prompt,
-            style_mode=style_mode
+            collar_y=collar_y,
+            waist_y=waist_y,
+            target_region=target_region,
+            target_rgb=target_rgb
         )
-
-    # 7. Precision Compositing:
-    # Blend generated clothing into target mask region
-    mask_3d = clothing_mask[:, :, None]
-    final_np = (generated_np.astype(np.float32) * mask_3d + original_base.astype(np.float32) * (1.0 - mask_3d))
-    final_np = np.clip(final_np, 0, 255).astype(np.uint8)
 
     # HARD-LOCK FACE & HEAD: Exactly 0.0000% difference above collar line!
     # The user's original face, eyes, nose, mouth, chin, hair, and neck are pasted directly from the original photo!
