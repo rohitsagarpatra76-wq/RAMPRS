@@ -5,6 +5,10 @@ const DEFAULT_CLOUD_TUNNEL = 'https://degree-teaches-brussels-lamb.trycloudflare
 function getApiBase() {
   const custom = localStorage.getItem('RAMPRS_API_URL');
   if (custom && custom.trim()) return custom.trim().replace(/\/+$/, '');
+  // When running on Render, the backend is unified on the exact same domain
+  if (window.location.hostname.includes('onrender.com')) {
+    return window.location.origin;
+  }
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     return 'http://127.0.0.1:8000';
   }

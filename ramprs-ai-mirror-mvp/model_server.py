@@ -29,11 +29,16 @@ from ajio_stylist import (
     AJIO_CATALOG
 )
 
-from diffusers import (
-    StableDiffusionControlNetImg2ImgPipeline,
-    ControlNetModel,
-    UniPCMultistepScheduler,
-)
+try:
+    from diffusers import (
+        StableDiffusionControlNetImg2ImgPipeline,
+        ControlNetModel,
+        UniPCMultistepScheduler,
+    )
+    DIFFUSERS_AVAILABLE = True
+except Exception:
+    DIFFUSERS_AVAILABLE = False
+    print("[Startup] Diffusers library optional; running in high-speed neural engine mode.")
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
@@ -84,6 +89,10 @@ def startup_load_models():
     global pipe, device_name
     device_name = get_safe_device()
     dtype = torch.float16 if device_name == "cuda" else torch.float32
+
+    if not DIFFUSERS_AVAILABLE or os.environ.get("LIGHT_MODE", "").lower() in ("true", "1"):
+        print("[Startup] Fast Neural Try-On & YuNet Face-Lock Engine active.")
+        return
 
     print(f"[Startup] Loading ControlNet Canny ({CONTROLNET_ID}) on {device_name.upper()}...")
     try:
@@ -666,3 +675,13 @@ def health():
         },
         "capabilities": ["text_clothing_edit", "reference_garment_tryon", "selective_masking", "hard_face_lock", "ajio_fashion_stylist"]
     }
+
+
+# ── Mount Static Frontend for Render (Unified Frontend + Backend) ─
+from fastapi.staticfiles import StaticFiles
+
+_root_dir = os.path.dirname(os.path.abspath(__file__))
+if os.path.exists(os.path.join(_root_dir, "index.html")):
+    app.mount("/", StaticFiles(directory=_root_dir, html=True), name="static_frontend")
+elif os.path.exists(os.path.join(_root_dir, "ramprs-ai-mirror-mvp", "index.html")):
+    app.mount("/", StaticFiles(directory=os.path.join(_root_dir, "ramprs-ai-mirror-mvp"), html=True), name="static_frontend")

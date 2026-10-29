@@ -21,3 +21,4 @@ def health():
         "status": "online",
         "cloud_tunnel": "https://degree-teaches-brussels-lamb.trycloudflare.com"
     }
+

@@ -2,12 +2,26 @@
 
 > **Photorealistic AI Virtual Try-On and Personal Clothing Recommendation System** with 100% facial identity preservation, real diffusion-based image modification, and Ajio Fashion Catalog intelligence.
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/rohitsagarpatra76-wq/RAMPRS)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/rohitsagarpatra76-wq/RAMPRS)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rohitsagarpatra76-wq/RAMPRS/blob/main/RAMPRS_AI_Colab_Server.ipynb)
 [![GitHub License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg?logo=pytorch)](https://pytorch.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
-[![Diffusers](https://img.shields.io/badge/Diffusers-0.27+-FFD21E.svg)](https://github.com/huggingface/diffusers)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-EE4C2C.svg?logo=pytorch)](https://pytorch.org)
+
+---
+
+## 🚀 1-Click Deploy on Render (Unified Frontend + Backend)
+
+Render hosts **both the full web studio frontend AND the FastAPI backend together on the same URL**:
+
+1. Click the button: **[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/rohitsagarpatra76-wq/RAMPRS)**
+2. Sign in with GitHub (`rohitsagarpatra76-wq`).
+3. Click **Apply** or **Create Web Service**.
+4. Render reads [`render.yaml`](render.yaml), installs dependencies, and deploys:
+   - **Frontend:** Luxury Dark Studio UI, Before/After Slider, Camera capture, and Ajio Stylist.
+   - **Backend:** `/edit_clothing`, `/ajio/analyze_and_recommend`, and `/health` endpoints.
+   - **Unified Domain:** Runs on `https://ramprs-ai-mirror.onrender.com` with zero CORS and zero mixed-content issues!
 
 ---
 
@@ -25,7 +39,7 @@
    - Ingested real fashion data from `Ajio Fasion Clothing.csv` into a curated catalog (`ajio_curated_catalog.json`).
    - Analyzes personal colorimetry (Skin Undertone: Warm, Cool, Neutral; Contrast Ratio).
    - Recommends personalized Ajio outfits that complement the user's complexion with 1-click virtual try-on.
-   - **Full In-Browser Fallback**: When deployed to Vercel, the colorimetry analysis and Ajio catalog browser run natively in client-side JavaScript via HTML5 Canvas.
+   - **Full In-Browser Fallback**: Runs natively in client-side JavaScript via HTML5 Canvas or on backend.
 
 4. **Selective Region Targeting**:
    - `Top`: Modifies shirt/upper garment only (pants, shoes, face locked).
@@ -37,7 +51,6 @@
    - Interactive **Before / After Split Comparison Slider** with smooth mouse and touch-drag support.
    - Multi-view stage: Slider, Side-by-Side, Edited Only, and Target Mask Preview.
    - Real-time WebRTC camera selfie capture and high-resolution JPEG download.
-   - **Dynamic AI Model Server Switcher (`⚙️ AI Server`)**: Allows seamless connection to local PyTorch servers or Google Colab T4 GPU tunnels.
 
 ---
 
@@ -46,11 +59,10 @@
 Run the heavy AI models on a free **NVIDIA T4 GPU (16GB VRAM)** in Google Colab for ~3-second try-on inference:
 
 1. Click the badge: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rohitsagarpatra76-wq/RAMPRS/blob/main/RAMPRS_AI_Colab_Server.ipynb)
-2. In Colab, make sure GPU is enabled: **Runtime** ➔ **Change runtime type** ➔ **T4 GPU** ➔ **Save**.
+2. In Colab, verify GPU is enabled: **Runtime** ➔ **Change runtime type** ➔ **T4 GPU** ➔ **Save**.
 3. Run all cells (**Runtime** ➔ **Run all** or `Ctrl + F9`).
 4. Copy the printed **Public AI Endpoint** (e.g. `https://xxxx.trycloudflare.com`).
-5. Open your Vercel site [ramprsai.vercel.app](https://ramprsai.vercel.app), click **⚙️ AI Server** in the topbar, paste the endpoint, and click **Save**.
-6. The status will turn green: **`AI Ready (CUDA)`**!
+5. Open your frontend, click **⚙️ AI Server** in the topbar, paste the endpoint, and click **Save**.
 
 ---
 
@@ -94,14 +106,13 @@ Run the heavy AI models on a free **NVIDIA T4 GPU (16GB VRAM)** in Google Colab 
 
 ### Prerequisites
 - **Python** (3.10 or 3.11 recommended)
-- **PyTorch** & vision dependencies:
+- **Dependencies**:
   ```bash
   pip install -r ramprs-ai-mirror-mvp/requirements.txt
   ```
 
 ### 1. Start the AI Model Server (Port 8000)
 ```powershell
-cd ramprs-ai-mirror-mvp
 python -m uvicorn model_server:app --host 127.0.0.1 --port 8000
 ```
 
@@ -113,25 +124,13 @@ node server.js
 ```
 
 ### 3. Open Studio in Browser
-Navigate to:
-```
-http://localhost:3000
-```
-
----
-
-## ☁️ Deploying on Vercel
-
-1. Click **[Deploy with Vercel](https://vercel.com/new/clone?repository-url=https://github.com/rohitsagarpatra76-wq/RAMPRS)** or import the repo at [vercel.com/new](https://vercel.com/new).
-2. The included `vercel.json` configures all routing automatically.
-3. Open your live URL (e.g. `https://ramprsai.vercel.app`):
-   - The studio UI, Before/After comparison slider, camera capture, and in-browser Ajio styling engine work out of the box.
-   - Connect your local PC or Google Colab GPU via **⚙️ AI Server** for instant diffusion virtual try-ons!
+Navigate to `http://localhost:3000`
 
 ---
 
 ## 📡 API Endpoints
 
+- `GET /`: Serves the complete luxury studio frontend.
 - `POST /edit_clothing`: Generates precision try-on edits with selective masking and face-lock.
 - `POST /ajio/analyze_and_recommend`: Analyzes skin tone and returns matched Ajio fashion catalog items.
 - `GET /ajio/catalog`: Browses curated Ajio clothing items by category.
