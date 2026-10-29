@@ -1,0 +1,8 @@
+{
+  "name": "ramprs-ai-mirror-mvp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.js", "serve-model": "uvicorn model_server:app --host 127.0.0.1 --port 8000" },
+  "dependencies": { "express": "^4.21.2" }
+}

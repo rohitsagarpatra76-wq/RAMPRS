@@ -1,0 +1,29 @@
+# Large CSV files (>100MB exceeds GitHub hard limit)
+*.csv
+Ajio Fasion Clothing.csv
+
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+env/
+.venv/
+
+# Large binaries or temporary test benchmark images
+ramprs-ai-mirror-mvp/benchmark_results/*.jpg
+*.log
+
+# OS & Editor files
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

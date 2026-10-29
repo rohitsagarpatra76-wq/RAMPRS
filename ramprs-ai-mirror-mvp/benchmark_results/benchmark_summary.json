@@ -1,0 +1,77 @@
+[
+  {
+    "id": "TC-01-top-oversized-black-tee",
+    "name": "Text-Only: Oversized Black T-Shirt (Top Only)",
+    "target_region": "top",
+    "elapsed_sec": 38.55,
+    "head_preservation_mae": 1.169,
+    "clothing_edit_intensity": 8.37,
+    "mask_stats": {
+      "collar_y": 186,
+      "waist_y": 390,
+      "target_region": "top",
+      "mask_area_ratio": 0.1653564453125
+    },
+    "status": "PASS"
+  },
+  {
+    "id": "TC-02-all-oxford-beige-chinos",
+    "name": "Text-Only: White Oxford + Beige Trousers (Full Outfit)",
+    "target_region": "all",
+    "elapsed_sec": 35.56,
+    "head_preservation_mae": 1.169,
+    "clothing_edit_intensity": 10.61,
+    "mask_stats": {
+      "collar_y": 186,
+      "waist_y": 390,
+      "target_region": "all",
+      "mask_area_ratio": 0.41995326450892856
+    },
+    "status": "PASS"
+  },
+  {
+    "id": "TC-03-outerwear-denim-jacket",
+    "name": "Text-Only: Distressed Denim Jacket (Outerwear Only)",
+    "target_region": "outerwear",
+    "elapsed_sec": 33.6,
+    "head_preservation_mae": 1.169,
+    "clothing_edit_intensity": 8.02,
+    "mask_stats": {
+      "collar_y": 186,
+      "waist_y": 390,
+      "target_region": "outerwear",
+      "mask_area_ratio": 0.18196847098214286
+    },
+    "status": "PASS"
+  },
+  {
+    "id": "TC-04-reference-card1-transfer",
+    "name": "Reference Garment: Card 1 Capsule Outfit Transfer",
+    "target_region": "all",
+    "elapsed_sec": 32.86,
+    "head_preservation_mae": 1.169,
+    "clothing_edit_intensity": 11.51,
+    "mask_stats": {
+      "collar_y": 186,
+      "waist_y": 390,
+      "target_region": "all",
+      "mask_area_ratio": 0.44894670758928573
+    },
+    "status": "PASS"
+  },
+  {
+    "id": "TC-05-hybrid-navy-blazer",
+    "name": "Hybrid: Reference Garment + Gold Button Blazer Prompt",
+    "target_region": "top",
+    "elapsed_sec": 32.46,
+    "head_preservation_mae": 1.169,
+    "clothing_edit_intensity": 8.15,
+    "mask_stats": {
+      "collar_y": 186,
+      "waist_y": 390,
+      "target_region": "top",
+      "mask_area_ratio": 0.16530412946428572
+    },
+    "status": "PASS"
+  }
+]

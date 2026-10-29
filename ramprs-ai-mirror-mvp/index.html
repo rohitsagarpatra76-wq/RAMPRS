@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#121212">
+  <title>RAMPRS AI Virtual Try-On & Fashion Stylist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="studio-topbar">
+  <div class="brand-group">
+    <span class="brand-logo">RAMPRS</span>
+    <span class="brand-sub">AI VIRTUAL TRY-ON STUDIO</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-sm btn-outline model-badge-btn" id="btnToggleModelInfo">🧠 AI Models Info</button>
+    <div id="aiStatus" class="ai-status-badge"><i class="dot"></i> Connecting to AI Engine...</div>
+    <span class="version-tag">PRO PHOTO ENGINE v2.0</span>
+  </div>
+</header>
+
+<main class="studio-container">
+
+  <!-- LEFT CONTROL WORKBENCH -->
+  <aside class="control-panel">
+    
+    <!-- STEP 1: PERSON PHOTOGRAPH -->
+    <section class="panel-section">
+      <div class="section-header">
+        <span class="step-num">01</span>
+        <div>
+          <h3>Person Photograph</h3>
+          <p>Upload a person photo or take a camera selfie</p>
+        </div>
+      </div>
+
+      <div class="upload-dropzone" id="personDropzone">
+        <img id="personPreview" alt="Person preview" src="assets/user_portrait_sample.jpg">
+        <video id="cameraVideo" autoplay playsinline muted hidden></video>
+        <canvas id="cameraCanvas" hidden></canvas>
+        <div class="dropzone-overlay" id="dropzoneOverlay">
+          <button class="btn btn-sm btn-dark" id="btnUploadPerson">📁 Upload Image</button>
+          <button class="btn btn-sm btn-outline" id="btnToggleCamera">📷 Use Camera</button>
+          <button class="btn btn-sm btn-gold" id="btnCapturePhoto" hidden>📸 Capture</button>
+          <input type="file" id="personFileInput" accept="image/jpeg,image/png,image/webp" hidden>
+        </div>
+      </div>
+    </section>
+
+    <!-- STEP 2: TARGET GARMENT REGION -->
+    <section class="panel-section">
+      <div class="section-header">
+        <span class="step-num">02</span>
+        <div>
+          <h3>Target Region</h3>
+          <p>Choose which clothing parts to edit</p>
+        </div>
+      </div>
+
+      <div class="target-region-pills" id="regionSelector">
+        <button class="region-pill active" data-region="all">
+          <span class="pill-icon">👔</span>
+          <span class="pill-label">Full Outfit</span>
+        </button>
+        <button class="region-pill" data-region="top">
+          <span class="pill-icon">👕</span>
+          <span class="pill-label">Top / Shirt only</span>
+        </button>
+        <button class="region-pill" data-region="bottom">
+          <span class="pill-icon">👖</span>
+          <span class="pill-label">Pants only</span>
+        </button>
+        <button class="region-pill" data-region="outerwear">
+          <span class="pill-icon">🧥</span>
+          <span class="pill-label">Jacket / Layer</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- STEP 3: CLOTHING SPECIFICATION -->
+    <section class="panel-section">
+      <div class="section-header">
+        <span class="step-num">03</span>
+        <div>
+          <h3>Clothing Source & Stylist</h3>
+          <p>Select curated Ajio outfit, describe style, or upload reference</p>
+        </div>
+      </div>
+
+      <!-- TABS: AJIO STYLIST vs TEXT PROMPT vs REFERENCE GARMENT vs HYBRID -->
+      <div class="input-tabs">
+        <button class="tab-btn active" id="tabAjioMode">🛍️ Ajio Stylist</button>
+        <button class="tab-btn" id="tabTextMode">💬 Text Prompt</button>
+        <button class="tab-btn" id="tabGarmentMode">🖼 Reference Image</button>
+        <button class="tab-btn" id="tabHybridMode">✨ Both (Hybrid)</button>
+      </div>
+
+      <!-- 1. AJIO AI FASHION STYLIST TAB -->
+      <div class="tab-content" id="contentAjio">
+        <!-- Personal Stylist Diagnostic Card -->
+        <div class="ajio-stylist-card" id="ajioStylistCard">
+          <div class="stylist-header">
+            <span class="stylist-badge">✨ AI COLOR & STYLE DIAGNOSTIC</span>
+            <span id="ajioUndertoneBadge" class="undertone-tag">Warm Golden</span>
+          </div>
+          <p id="ajioStyleTip" class="stylist-tip">Rich earth tones and deep warm neutrals make your complexion look radiant and healthy.</p>
+          <div class="stylist-palettes">
+            <span class="palette-title">Best Ajio Palettes for You:</span>
+            <div id="ajioPaletteTags" class="palette-tags">
+              <span class="color-tag">Olive Green</span>
+              <span class="color-tag">Deep Navy</span>
+              <span class="color-tag">Camel & Tan</span>
+              <span class="color-tag">Warm Burgundy</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ajio Category Filter Pills -->
+        <div class="ajio-category-filters" id="ajioFilters">
+          <button class="cat-pill active" data-cat="All">All Matched</button>
+          <button class="cat-pill" data-cat="Shirt">Shirts</button>
+          <button class="cat-pill" data-cat="T-Shirt">T-Shirts</button>
+          <button class="cat-pill" data-cat="Blazer">Blazers</button>
+          <button class="cat-pill" data-cat="Outerwear">Jackets</button>
+          <button class="cat-pill" data-cat="Bottoms">Trousers</button>
+          <button class="cat-pill" data-cat="Ethnic">Ethnic</button>
+        </div>
+
+        <!-- Ajio Catalog Grid -->
+        <div class="ajio-catalog-grid" id="ajioCatalogGrid">
+          <div class="ajio-loading">Analyzing portrait against Ajio catalog...</div>
+        </div>
+      </div>
+
+      <!-- 2. TEXT PROMPT INPUT -->
+      <div class="tab-content" id="contentPrompt" hidden>
+        <label class="input-label" for="promptInput">Describe the clothing to wear:</label>
+        <textarea id="promptInput" rows="3" placeholder="e.g. A crisp white Oxford button-down shirt paired with tailored beige chinos and clean leather shoes."></textarea>
+        
+        <div class="prompt-chips">
+          <span class="chip-title">Quick presets:</span>
+          <button class="chip" data-prompt="Crisp white Oxford button-down shirt with tailored charcoal trousers">White Oxford</button>
+          <button class="chip" data-prompt="Heavyweight black oversized cotton T-shirt with minimal drape">Black Oversized Tee</button>
+          <button class="chip" data-prompt="Navy blue tailored blazer over a clean crewneck t-shirt">Navy Blazer</button>
+          <button class="chip" data-prompt="Sage green relaxed linen shirt with cream trousers">Linen Outfit</button>
+          <button class="chip" data-prompt="Deep burgundy button-up shirt with slim black trousers">Burgundy Evening</button>
+        </div>
+      </div>
+
+      <!-- 3. REFERENCE GARMENT IMAGE INPUT -->
+      <div class="tab-content" id="contentGarment" hidden>
+        <label class="input-label">Upload Garment Reference Photo:</label>
+        <div class="garment-upload-box" id="garmentDropzone">
+          <div class="garment-preview-wrap" id="garmentPreviewWrap" hidden>
+            <img id="garmentPreviewImg" alt="Garment reference">
+            <button class="remove-garment-btn" id="btnRemoveGarment">✕</button>
+          </div>
+          <div class="garment-empty-state" id="garmentEmpty">
+            <span class="empty-icon">🎽</span>
+            <b>Click or drag garment image here</b>
+            <span>JPG, PNG or WebP</span>
+          </div>
+          <input type="file" id="garmentFileInput" accept="image/jpeg,image/png,image/webp" hidden>
+        </div>
+        <div id="garmentInfoBox" class="garment-info-badge" hidden>
+          <span class="color-swatch" id="garmentColorSwatch"></span>
+          <span id="garmentColorName">Detected Garment Color</span>
+        </div>
+
+        <div class="sample-garments-section">
+          <span class="chip-title">Or pick a capsule wardrobe reference:</span>
+          <div class="sample-garments-grid" id="sampleGarmentsGrid">
+            <div class="sample-card" data-src="assets/card_1.jpg" data-name="Oxford & Denim">
+              <img src="assets/card_1.jpg" alt="Oxford & Denim">
+              <span>Oxford & Denim</span>
+            </div>
+            <div class="sample-card" data-src="assets/card_2.jpg" data-name="Casual Henley">
+              <img src="assets/card_2.jpg" alt="Casual Henley">
+              <span>Casual Henley</span>
+            </div>
+            <div class="sample-card" data-src="assets/card_3.jpg" data-name="Tailored Suiting">
+              <img src="assets/card_3.jpg" alt="Tailored Suiting">
+              <span>Tailored Suit</span>
+            </div>
+            <div class="sample-card" data-src="assets/card_4.jpg" data-name="Linen Summer">
+              <img src="assets/card_4.jpg" alt="Linen Summer">
+              <span>Linen Summer</span>
+            </div>
+            <div class="sample-card" data-src="assets/card_5.jpg" data-name="Streetwear Cargo">
+              <img src="assets/card_5.jpg" alt="Streetwear Cargo">
+              <span>Street Cargo</span>
+            </div>
+            <div class="sample-card" data-src="assets/card_6.jpg" data-name="Minimalist Knit">
+              <img src="assets/card_6.jpg" alt="Minimalist Knit">
+              <span>Minimal Knit</span>
+            </div>
+            <div class="sample-card" data-src="assets/card_7.jpg" data-name="Monochrome Layer">
+              <img src="assets/card_7.jpg" alt="Monochrome Layer">
+              <span>Monochrome</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: FIT & STYLE CONTROLS -->
+      <div class="fit-style-grid">
+        <div class="form-group">
+          <label for="fitSelect">Garment Fit:</label>
+          <select id="fitSelect">
+            <option value="Regular" selected>Regular Fit</option>
+            <option value="Slim">Slim / Tapered</option>
+            <option value="Relaxed">Relaxed Contemporary</option>
+            <option value="Oversized">Oversized Silhouette</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="styleModeSelect">Visual Style:</label>
+          <select id="styleModeSelect">
+            <option value="realistic" selected>Photorealistic Natural</option>
+            <option value="editorial">Editorial Lookbook</option>
+            <option value="streetwear">Streetwear & Layered</option>
+            <option value="formal">Bespoke Suiting / Formal</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn-gold btn-block btn-generate" id="btnGenerate">
+        <span>✨ GENERATE CLOTHING EDIT</span>
+      </button>
+
+      <!-- ACTIVE AI MODELS BREAKDOWN CARD -->
+      <div class="models-info-card" id="modelsInfoCard">
+        <div class="models-info-header">
+          <span class="models-title">🤖 Active AI Models & System Architecture:</span>
+        </div>
+        <ul class="models-list">
+          <li><b>Generative Model:</b> <span>Stable Diffusion v1-5 (RunwayML)</span></li>
+          <li><b>Pose & Silhouette:</b> <span>ControlNet Canny (lllyasviel)</span></li>
+          <li><b>Face & Landmark:</b> <span>OpenCV YuNet Deep Neural Net (ONNX)</span></li>
+          <li><b>Fashion Knowledge:</b> <span>Ajio Catalog Clothing Intelligence</span></li>
+          <li><b>Diffusion Solver:</b> <span>UniPC Multistep (2nd-Order Fast ODE)</span></li>
+          <li><b>Face Preservation:</b> <span class="tag-gold">Hard Collar-Line Lock (0.0% drift)</span></li>
+          <li><b>Compute Device:</b> <span id="modelInfoDevice">CPU (PyTorch Safe Mode)</span></li>
+        </ul>
+      </div>
+
+    </section>
+
+  </aside>
+
+  <!-- RIGHT MAIN CANVAS: COMPARISON & PREVIEW -->
+  <section class="preview-stage">
+    
+    <div class="stage-topbar">
+      <div class="view-toggles">
+        <button class="view-btn active" data-view="slider">↔ Before / After Slider</button>
+        <button class="view-btn" data-view="side">◫ Side-by-Side</button>
+        <button class="view-btn" data-view="edited">🖼 Edited Only</button>
+        <button class="view-btn" data-view="mask">🎯 Mask Preview</button>
+      </div>
+
+      <div class="stage-actions">
+        <button class="btn btn-sm btn-dark" id="btnDownload">📥 Download Result</button>
+      </div>
+    </div>
+
+    <!-- CANVAS VIEWPORTS -->
+    <div class="canvas-viewport" id="canvasViewport">
+      
+      <!-- 1. BEFORE / AFTER SPLIT COMPARISON SLIDER -->
+      <div class="comparison-slider" id="comparisonSlider">
+        <!-- Edited Image (Bottom Layer) -->
+        <div class="slide-layer slide-after">
+          <img id="afterImg" alt="Edited clothing output" src="assets/user_portrait_sample.jpg">
+          <span class="badge-label badge-after">AFTER (AI CLOTHING EDIT)</span>
+        </div>
+        <!-- Original Image (Top Layer clipped by slider) -->
+        <div class="slide-layer slide-before" id="slideBefore">
+          <img id="beforeImg" alt="Original photograph" src="assets/user_portrait_sample.jpg">
+          <span class="badge-label badge-before">BEFORE (ORIGINAL)</span>
+        </div>
+        <!-- Draggable Handle -->
+        <div class="slider-handle" id="sliderHandle">
+          <div class="handle-line"></div>
+          <div class="handle-circle">↔</div>
+          <div class="handle-line"></div>
+        </div>
+      </div>
+
+      <!-- 2. SIDE-BY-SIDE VIEW -->
+      <div class="side-by-side-view" id="sideBySideView" hidden>
+        <div class="side-panel">
+          <span class="badge-label">ORIGINAL PHOTO</span>
+          <img id="sideBeforeImg" alt="Original" src="assets/user_portrait_sample.jpg">
+        </div>
+        <div class="side-panel">
+          <span class="badge-label badge-after">EDITED CLOTHES</span>
+          <img id="sideAfterImg" alt="Edited" src="assets/user_portrait_sample.jpg">
+        </div>
+      </div>
+
+      <!-- 3. EDITED ONLY VIEW -->
+      <div class="single-view" id="singleEditedView" hidden>
+        <img id="singleAfterImg" alt="Edited clothing" src="assets/user_portrait_sample.jpg">
+      </div>
+
+      <!-- 4. MASK VIEW -->
+      <div class="single-view" id="singleMaskView" hidden>
+        <img id="singleMaskImg" alt="Target clothing mask visualization" src="assets/user_portrait_sample.jpg">
+      </div>
+
+      <!-- INFERENCE PROGRESS OVERLAY -->
+      <div class="inference-overlay" id="inferenceOverlay" hidden>
+        <div class="spinner-gold"></div>
+        <h4>Synthesizing Realistic Clothing…</h4>
+        <p id="inferenceStatusText">Segmenting garment region and aligning fabric physics</p>
+        <span class="sub-note">100% Identity, face, hair, and scene preservation active</span>
+      </div>
+
+    </div>
+
+    <!-- QUALITY ASSURANCE & FIDELITY METRICS -->
+    <div class="qa-metrics-banner" id="qaMetricsBanner">
+      <div class="metric-item">
+        <span class="metric-icon">🛡️</span>
+        <div>
+          <b>Face & Identity</b>
+          <span id="metricIdentity">100% Preserved</span>
+        </div>
+      </div>
+      <div class="metric-item">
+        <span class="metric-icon">🏡</span>
+        <div>
+          <b>Scene & Background</b>
+          <span id="metricBackground">100% Locked</span>
+        </div>
+      </div>
+      <div class="metric-item">
+        <span class="metric-icon">✂️</span>
+        <div>
+          <b>Modified Region</b>
+          <span id="metricRegion">Full Outfit</span>
+        </div>
+      </div>
+      <div class="metric-item">
+        <span class="metric-icon">✨</span>
+        <div>
+          <b>Fabric & Style Mode</b>
+          <span id="metricStyle">Realistic Natural</span>
+        </div>
+      </div>
+      <div class="metric-item">
+        <span class="metric-icon">🧠</span>
+        <div>
+          <b>Face AI Engine</b>
+          <span id="metricDetector">OpenCV YuNet DNN</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

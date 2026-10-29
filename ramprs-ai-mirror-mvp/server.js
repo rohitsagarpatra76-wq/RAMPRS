@@ -1,0 +1,11 @@
+import express from 'express';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.disable('x-powered-by');
+app.use(express.static(__dirname, { extensions: ['html'] }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, app: 'RAMPRS AI Mirror MVP', mode: 'local-first demo' }));
+const host = '0.0.0.0';
+const port = Number(process.env.PORT || 3000);
+app.listen(port, host, () => console.log(`RAMPRS AI Mirror: http://localhost:${port}`));
