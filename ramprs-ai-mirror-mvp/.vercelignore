@@ -1,0 +1,10 @@
+# Ignore Python backend from Vercel static build
+*.py
+requirements.txt
+*.onnx
+*.xml
+*.csv
+RAMPRS_AI_Colab_Server.ipynb
+benchmark_results/
+cloudflared.exe
+*.bat
